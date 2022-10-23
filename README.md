@@ -12,7 +12,7 @@
 </br>
 
 ## 📄About:
-It's a web app based on Flask. You can there check a price of stocks, "buy" them, "sell" that you already own, also check history of transactions. All the data about stocks is received via IEX's API.
+Web app based on Flask. You can there check a price of stocks, "buy" them, "sell" that you already own, also check history of transactions. All the data about stocks is received via IEX's API.
 </br>
 </br>
 
