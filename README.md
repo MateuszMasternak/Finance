@@ -24,6 +24,11 @@ It's a web app based on Flask. You can there check a price of stocks, "buy" them
 > https://docs.python.org/3/tutorial/venv.html.
 * Download all dependencies:
 > python -m pip install -r requirements.txt.
+* Register on the IEX's site:
+> https://iexcloud.io/cloud-login#/register/
+* Get your token:
+> https://iexcloud.io/console/tokens
+* Create .env file and type in "API_KEY='<your token>'" and "DB_NAME='<name of database>'" there. 
 * Run the app via terminal form the main directory:
 > flask --app application.py run
 </br>
