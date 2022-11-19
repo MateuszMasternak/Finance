@@ -1,6 +1,6 @@
-import os, datetime
-
-from flask import Flask, flash, redirect, render_template, request, session
+import os
+import datetime
+from flask import Flask, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
@@ -19,6 +19,7 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # Take environment variables from .env
 load_dotenv()
+
 
 # Ensure responses aren't cached
 @app.after_request
@@ -42,11 +43,13 @@ Session(app)
 db = Database(os.getenv("DB_NAME"))
 res = db.cur.execute("SELECT name FROM sqlite_master WHERE name='users'")
 if res.fetchone() is None:
-    db.cur.execute("CREATE TABLE users ('id' integer PRIMARY KEY NOT NULL, 'username' text NOT NULL, 'hash' text NOT NULL, 'cash' numeric NOT NULL DEFAULT 10000.00 )")
+    db.cur.execute("CREATE TABLE users ('id' integer PRIMARY KEY NOT NULL, 'username' text NOT NULL, "
+                   "'hash' text NOT NULL, 'cash' numeric NOT NULL DEFAULT 10000.00 )")
     db.con.commit()
 res = db.cur.execute("SELECT name FROM sqlite_master WHERE name='transactions'")
 if res.fetchone() is None:
-    db.cur.execute("CREATE TABLE transactions ('id' integer PRIMARY KEY NOT NULL, 'user_id' integer NOT NULL, 'symbol' text NOT NULL, 'price' numeric NOT NULL, 'shares' integer NOT NULL, 'time' text NOT NULL)")
+    db.cur.execute("CREATE TABLE transactions ('id' integer PRIMARY KEY NOT NULL, 'user_id' integer NOT NULL, "
+                   "'symbol' text NOT NULL, 'price' numeric NOT NULL, 'shares' integer NOT NULL, 'time' text NOT NULL)")
     db.con.commit()
 
 
@@ -62,7 +65,8 @@ def index():
     user_id = session["user_id"]
     cash = db.cur.execute("SELECT cash FROM users WHERE id=?", (user_id,))
     cash = cash.fetchone()
-    transactions = db.cur.execute("SELECT symbol, sum(shares) FROM transactions WHERE user_id = ? GROUP BY symbol", (user_id,))
+    transactions = db.cur.execute("SELECT symbol, sum(shares) FROM transactions WHERE user_id = ? GROUP BY symbol",
+                                  (user_id,))
     transactions = transactions.fetchall()
     transactions_sum = []
     total = cash[0]
@@ -86,19 +90,19 @@ def buy():
     if request.method == "POST":
         symbol = request.form.get("symbol")
         data = lookup(symbol)
-        if data == None:
+        if data is None:
             return apology("must provide existing symbol", 400)
         symbol = data["symbol"]
         name = data["name"]
         price = data["price"]
         shares = request.form.get("shares")
         check = [False, False, False]
-        if shares != None:
+        if shares is not None:
             check[0] = True
             if shares.isnumeric():
                 check[1] = True
                 shares = float(shares)
-                if shares >= 1 and int(shares) == shares:
+                if 1 <= shares == int(shares):
                     check[2] = True
         if False in check:
             return apology("must provide positive and not fractional number of shares", 400)
@@ -113,7 +117,8 @@ def buy():
         db.con.commit()
         time = datetime.datetime.now()
         time = time.strftime("%Y-%m-%d %H:%M:%S")
-        db.cur.execute("INSERT INTO transactions (user_id, symbol, price, shares, time) VALUES (?, ?, ?, ?, ?)", (user_id, symbol, price, shares, time))
+        db.cur.execute("INSERT INTO transactions (user_id, symbol, price, shares, time) VALUES (?, ?, ?, ?, ?)",
+                       (user_id, symbol, price, shares, time))
         db.con.commit()
         return redirect("/")
     else:
@@ -190,7 +195,7 @@ def quote():
     if request.method == "POST":
         symbol = request.form.get("symbol")
         data = lookup(symbol)
-        if data == None:
+        if data is None:
             return apology("must provide existing symbol", 400)
         return render_template("quoted.html", data=data)
     else:
@@ -204,21 +209,21 @@ def register():
         username = request.form.get("username")
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
-        if username == None or password == None or confirmation == None or password != confirmation:
+        if username is None or password is None or confirmation is None or password != confirmation:
             return apology("must provide username and password which is same in both fields", 400)
         username_check = db.cur.execute("SELECT username from users WHERE username=?", (username,))
         if username_check.fetchone() is not None:
             return apology("that username already exists", 400)
         check_len = False
-        if len(password) >= 8 and len(password) <= 12:
+        if 8 <= len(password) <= 12:
             check_len = True
         signs = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"]
         check_sign = any(sign in password for sign in signs)
         numbers = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
         check_num = any(num in password for num in numbers)
-        if check_len != True or check_sign != True or check_num != True:
-            return apology("password should have 8 to 12 characters, one special sign [!@#$%^&*()] and one number [0-9]", 400)
-
+        if check_len is not True or check_sign is not True or check_num is not True:
+            return apology("password should have 8 to 12 characters, one special sign [!@#$%^&*()] and one number "
+                           "[0-9]", 400)
 
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
         db.cur.execute("INSERT INTO users (username, hash) VALUES (?, ?)", (username, hashed_password))
@@ -228,17 +233,17 @@ def register():
         return render_template("register.html")
 
 
-
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
     """Sell shares of stock"""
     if request.method == "POST":
         symbol = request.form.get("symbol")
-        if symbol == None:
+        if symbol is None:
             return apology("must provide symbol", 400)
         user_id = session["user_id"]
-        shares = db.cur.execute("SELECT sum(shares) FROM transactions WHERE user_id = ? AND symbol = ?", (user_id, symbol))
+        shares = db.cur.execute("SELECT sum(shares) FROM transactions WHERE user_id = ? AND symbol = ?",
+                                (user_id, symbol))
         shares = shares.fetchone()
         shares = shares[0]
         input_shares = int(request.form.get("shares"))
@@ -250,7 +255,8 @@ def sell():
         shares = input_shares * (-1)
         time = datetime.datetime.now()
         time = time.strftime("%Y-%m-%d %H:%M:%S")
-        db.cur.execute("INSERT INTO transactions (user_id, symbol, price, shares, time) VALUES (?, ?, ?, ?, ?)", (user_id, symbol, price, shares, time))
+        db.cur.execute("INSERT INTO transactions (user_id, symbol, price, shares, time) VALUES (?, ?, ?, ?, ?)",
+                       (user_id, symbol, price, shares, time))
         db.con.commit()
         user_cash = db.cur.execute("SELECT cash FROM users WHERE id = ?", (user_id,))
         user_cash = user_cash.fetchone()
