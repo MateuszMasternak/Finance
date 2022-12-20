@@ -12,7 +12,7 @@
 </br>
 
 ## 📄About:
-Finance is a stock exchange web app based on flask. The app enables to check a price of stocks, "buy" them, "sell" those you already own, also check history of transactions. All the data about the stocks is delivered via IEX's API.
+A web app that simulates the stock market, which includes features such as buying, selling and checking stock prices.
 </br>
 </br>
 
